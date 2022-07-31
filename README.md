@@ -32,7 +32,8 @@ Use Postman to test the API.
 - POSTMAN : https://documenter.getpostman.com/view/21630263/UzXKWz5d
 
 ## Note
-
+- DB:
+  - bd/laravel.sql
 - Login: 
     - URL: http://laravel-8-api-crud.rob/api/login 
     - Method: POST

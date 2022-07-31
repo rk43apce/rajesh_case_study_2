@@ -3,6 +3,8 @@
 namespace Tests\Unit;
 
 use Tests\TestCase;
+use Illuminate\Foundation\Testing\WithoutMiddleware;
+
 
 class cartTest extends TestCase
 {
