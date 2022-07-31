@@ -21,10 +21,4 @@ class ProductResource extends JsonResource
         ];
     }
 
-    public function with($request){
-        return [
-            'version' => '1.0.0',
-            'author_url' => url('https://www.nazmulrobin.com'),
-        ];
-    }
 }

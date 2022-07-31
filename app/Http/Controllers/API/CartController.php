@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
+use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Resources\ProductResource;
+use Auth;
+use Exception;
 
-class ProductController extends Controller
+class CartController extends Controller
 {
 	/**
 	 * Display a listing of the resource.
@@ -19,12 +20,12 @@ class ProductController extends Controller
 	{
 
 		try {
-			$products = Product::orderBy('id', 'Desc')->take(25)->get();
+			$carts = Cart::orderBy('id', 'Desc')->take(25)->get();
 
 			$json =[
 
 				"status"=>"success",
-				"data"=>$products,
+				"data"=>$carts,
 			];
 		} catch (\Throwable $th) {
 			
@@ -53,23 +54,22 @@ class ProductController extends Controller
 			$data = $request->all();
 
 			$validator = Validator::make($data, [
-			"price"=> 'required',
-			"description"=> 'required',
-			"category"=> 'required',
-			"name"=> 'required'
+			"sessoin_id"=> 'required',
+			"product_id"=> 'required',
+			"qty"=> 'required'
 			]);
 
 		if ($validator->fails()) {
 			return response(['error' => $validator->errors(), 'Validation Error']);
 		}
 
-		$product = Product::create($data);
+		$Cart = Cart::create($data);
 
 
 		$json =[
 
 			"status"=>"success",
-			"data"=>$product
+			"data"=>$Cart
 		];
 
 
@@ -81,14 +81,14 @@ class ProductController extends Controller
 			];
 		}
 
-		
+		return response()->json($json);
 		
 	}
 
 	/**
 	 * Display the specified resource.
 	 *
-	 * @param  \App\Models\Product  $product
+	 * @param  \App\Models\Cart  $Cart
 	 * @return \Illuminate\Http\Response
 	 */
 	public function show(Request $request, $id )
@@ -97,11 +97,11 @@ class ProductController extends Controller
 		try {
 			
 			$inputs=  $request->all();
-			$products = Product::where('id', '=', $id)->first();;
+			$Carts = Cart::where('id', '=', $id)->first();;
 		
 			$json =[
 				"status"=>"success",
-				"data"=>$products,
+				"data"=>$Carts,
 			];
 
 		} catch (\Throwable $th) {
@@ -121,46 +121,90 @@ class ProductController extends Controller
 	 * Update the specified resource in storage.
 	 *
 	 * @param  \Illuminate\Http\Request  $request
-	 * @param  \App\Models\Product  $product
+	 * @param  \App\Models\Cart  $Cart
 	 * @return \Illuminate\Http\Response
 	 */
-	public function update(Request $request, Product $product)
+	public function update(Request $request, $id)
 	{
-		$data = $request->all();
 
-		$validator = Validator::make($data, [
-			'title' => 'required',
-		]);
+		try {
 
-		if ($validator->fails()) {
-			return response(['error' => $validator->errors(), 'Validation Error']);
+
+			$inputs = $request->all();
+
+			if (empty($inputs['sessoin_id'])) {
+				throw new Exception("Error Processing Request", 1);
+			}
+
+			$sessoin_id =  $inputs['sessoin_id'];
+
+		 	$result = Cart::where('id', '=',  $id)->where('sessoin_id', '=',  $sessoin_id)->first();
+
+		 	if (empty($result->id)) {
+		 		throw new Exception("Error Processing Request", 1);
+		 	}
+
+
+		 	$result->qty = $inputs['qty'];
+
+		 	$result->save();
+
+		 	$json=[
+
+		 		"status"=>"success",
+		 		"data"=> $result
+
+		 	];
+
+
+		} catch (\Throwable $th) {
+			
+			$json=[
+
+				"remark"=>$th->getMessage(),
+				"line"=> $th->getLine()
+			];
+
 		}
 
-		$product->update($request->all());
-		return new ProductResource($product);
+		return response()->json($json);
+
+		
 	}
 
 	/**
 	 * Remove the specified resource from storage.
 	 *
-	 * @param  \App\Models\Product  $product
+	 * @param  \App\Models\Cart  $Cart
 	 * @return \Illuminate\Http\Response
 	 */
-	public function destroy(Product $product)
+	public function destroy(Request $request, $id)
 	{
-		$product->delete();
-		return new ProductResource($product);
+
+		try {
+
+
+			$result =Cart::where('id',$id)->delete();
+
+			$json =[
+
+				"status"=>"success",
+				"data"=>$result,
+			];
+
+
+		} catch (\Throwable $th) {
+			
+			$json =[
+
+				"status"=>"fail",
+				"remark"=>$th->getMessage(),
+			];
+		}
+		
+		return response()->json($json);
+
+
 	}
 
-	/**
-	 * Search for a name
-	 *
-	 * @param  str  $name
-	 * @return \Illuminate\Http\Response
-	 */
-	public function search($title)
-	{
-		$products = Product::where('title', 'like', '%'.$title.'%')->get();
-		return ProductResource::collection($products);
-	}
 }
